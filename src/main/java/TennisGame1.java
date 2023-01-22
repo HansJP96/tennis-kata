@@ -1,10 +1,11 @@
+import utils.Score;
 
 public class TennisGame1 implements TennisGame {
-    
+
     private int m_score1 = 0;
     private int m_score2 = 0;
-    private String player1Name;
-    private String player2Name;
+    private final String player1Name;
+    private final String player2Name;
 
     public TennisGame1(String player1Name, String player2Name) {
         this.player1Name = player1Name;
@@ -12,65 +13,77 @@ public class TennisGame1 implements TennisGame {
     }
 
     public void wonPoint(String playerName) {
-        if (playerName == "player1")
+        if ("player1".equals(playerName)) {
             m_score1 += 1;
-        else
+        } else {
             m_score2 += 1;
+        }
     }
 
     public String getScore() {
-        String score = "";
-        int tempScore=0;
-        if (m_score1==m_score2)
-        {
-            switch (m_score1)
-            {
-                case 0:
-                        score = "Love-All";
-                    break;
-                case 1:
-                        score = "Fifteen-All";
-                    break;
-                case 2:
-                        score = "Thirty-All";
-                    break;
-                default:
-                        score = "Deuce";
-                    break;
-                
+        StringBuilder score = new StringBuilder();
+        if (isDrawScore()) {
+            score.append(drawScoreResult());
+        } else if (isGameOverDrawScore()) {
+            score.append(gameOverScoreResult());
+        } else {
+            score = new StringBuilder(regularGameScore());
+        }
+        return String.valueOf(score);
+    }
+
+    private boolean isDrawScore() {
+        return m_score1 == m_score2;
+    }
+
+    private String drawScoreResult() {
+        switch (m_score1) {
+            case 0:
+                return "Love-All";
+            case 1:
+                return "Fifteen-All";
+            case 2:
+                return "Thirty-All";
+            default:
+                return "Deuce";
+        }
+    }
+
+    private boolean isGameOverDrawScore() {
+        return m_score1 >= 4 || m_score2 >= 4;
+    }
+
+    private String gameOverScoreResult() {
+        int minusResult = m_score1 - m_score2;
+        switch (minusResult) {
+            case 1:
+                return "Advantage player1";
+            case -1:
+                return "Advantage player2";
+            default:
+                return gameOverWinner(minusResult);
+        }
+    }
+
+    private String gameOverWinner(int result) {
+        return result >= 2 ? "Win for player1" : "Win for player2";
+    }
+
+    private StringBuilder regularGameScore() {
+        StringBuilder regularScore = new StringBuilder();
+        int tempScore;
+        for (int i = 1; i < 3; i++) {
+            if (i == 1) tempScore = m_score1;
+            else {
+                regularScore.append("-");
+                tempScore = m_score2;
             }
+            regularScore.append(regularGameScoreResult(tempScore));
         }
-        else if (m_score1>=4 || m_score2>=4)
-        {
-            int minusResult = m_score1-m_score2;
-            if (minusResult==1) score ="Advantage player1";
-            else if (minusResult ==-1) score ="Advantage player2";
-            else if (minusResult>=2) score = "Win for player1";
-            else score ="Win for player2";
-        }
-        else
-        {
-            for (int i=1; i<3; i++)
-            {
-                if (i==1) tempScore = m_score1;
-                else { score+="-"; tempScore = m_score2;}
-                switch(tempScore)
-                {
-                    case 0:
-                        score+="Love";
-                        break;
-                    case 1:
-                        score+="Fifteen";
-                        break;
-                    case 2:
-                        score+="Thirty";
-                        break;
-                    case 3:
-                        score+="Forty";
-                        break;
-                }
-            }
-        }
-        return score;
+        return regularScore;
+    }
+
+    private String regularGameScoreResult(int tempScore) {
+        return Score.values()[tempScore].getScore();
     }
 }
