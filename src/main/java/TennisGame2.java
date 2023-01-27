@@ -1,11 +1,10 @@
 
-public class TennisGame2 implements TennisGame
-{
+public class TennisGame2 implements TennisGame {
     public int P1point = 0;
     public int P2point = 0;
-    
-    public String P1res = "";
-    public String P2res = "";
+
+    public StringBuilder P1res = new StringBuilder();
+    public StringBuilder P2res = new StringBuilder();
     private String player1Name;
     private String player2Name;
 
@@ -14,115 +13,128 @@ public class TennisGame2 implements TennisGame
         this.player2Name = player2Name;
     }
 
-    public String getScore(){
-        String score = "";
-        if (P1point == P2point && P1point < 4)
-        {
-            if (P1point==0)
-                score = "Love";
-            if (P1point==1)
-                score = "Fifteen";
-            if (P1point==2)
-                score = "Thirty";
-            score += "-All";
+    public String getScore() {
+        StringBuilder score = new StringBuilder();
+        if (scoreValidationByPoints(P1point, P2point, true)) {
+            score = new StringBuilder(updateScore(P1point, score));
+            score.append("-All");
         }
-        if (P1point==P2point && P1point>=3)
-            score = "Deuce";
-        
-        if (P1point > 0 && P2point==0)
-        {
-            if (P1point==1)
-                P1res = "Fifteen";
-            if (P1point==2)
-                P1res = "Thirty";
-            if (P1point==3)
-                P1res = "Forty";
-            
-            P2res = "Love";
-            score = P1res + "-" + P2res;
+        if (isDeuceScore(P1point, P2point)) {
+            score = new StringBuilder("Deuce");
         }
-        if (P2point > 0 && P1point==0)
-        {
-            if (P2point==1)
-                P2res = "Fifteen";
-            if (P2point==2)
-                P2res = "Thirty";
-            if (P2point==3)
-                P2res = "Forty";
-            
-            P1res = "Love";
-            score = P1res + "-" + P2res;
+        if (playerScoreNoPointsAgainst(P1point, P2point)) {
+            updateScoreForPlayer(P1point, P1res);
+            P2res = new StringBuilder("Love");
+            P1res = new StringBuilder("Love");
+            score = new StringBuilder(P1res).append("-").append(P2res);
         }
-        
-        if (P1point>P2point && P1point < 4)
-        {
-            if (P1point==2)
-                P1res="Thirty";
-            if (P1point==3)
-                P1res="Forty";
-            if (P2point==1)
-                P2res="Fifteen";
-            if (P2point==2)
-                P2res="Thirty";
-            score = P1res + "-" + P2res;
+        if (isRegularScoreBeforeLimitPoints(P1point, P2point)) {
+            updateScoreForPlayers(P1point, P2point);
+            score = new StringBuilder(P1res).append("-").append(P2res);
         }
-        if (P2point>P1point && P2point < 4)
-        {
-            if (P2point==2)
-                P2res="Thirty";
-            if (P2point==3)
-                P2res="Forty";
-            if (P1point==1)
-                P1res="Fifteen";
-            if (P1point==2)
-                P1res="Thirty";
-            score = P1res + "-" + P2res;
+        if (isGameOverDeuceScore(P1point, P2point)) {
+            score.append(playerWonAdvantage());
         }
-        
-        if (P1point > P2point && P2point >= 3)
-        {
-            score = "Advantage player1";
-        }
-        
-        if (P2point > P1point && P1point >= 3)
-        {
-            score = "Advantage player2";
-        }
-        
-        if (P1point>=4 && P2point>=0 && (P1point-P2point)>=2)
-        {
-            score = "Win for player1";
-        }
-        if (P2point>=4 && P1point>=0 && (P2point-P1point)>=2)
-        {
-            score = "Win for player2";
-        }
-        return score;
+        score = new StringBuilder(playerWonGame(String.valueOf(score)));
+        return String.valueOf(score);
     }
-    
-    public void SetP1Score(int number){
-        
-        for (int i = 0; i < number; i++)
-        {
+
+    private boolean isDeuceScore(int player1Points, int player2Points) {
+        return player1Points == player2Points && player1Points >= 3;
+    }
+
+    private boolean scoreValidationByPoints(int player1Score, int player2Score, boolean hasEqualPoints) {
+        return hasEqualPoints ?
+                player1Score == player2Score && player1Score < 4 : player1Score > player2Score && player1Score < 4;
+    }
+
+    private boolean isRegularScoreBeforeLimitPoints(int player1Score, int player2Score) {
+        return scoreValidationByPoints(player1Score, player2Score, false) ||
+                scoreValidationByPoints(player2Score, player1Score, false);
+    }
+
+    private boolean playerScoreNoPointsAgainst(int player1Score, int player2Score) {
+        return player1Score > 0 && player2Score == 0;
+    }
+
+    private String updateScore(int playerScore, StringBuilder actualScore) {
+        String resultObtained = actualScore.toString();
+        switch (playerScore) {
+            case 0:
+                resultObtained = "Love";
+                break;
+            case 1:
+                resultObtained = "Fifteen";
+                break;
+            case 2:
+                resultObtained = "Thirty";
+                break;
+            case 3:
+                resultObtained = "Forty";
+                break;
+        }
+        return resultObtained;
+    }
+
+    private void updateScoreForPlayers(int p1points, int p2points) {
+        P1res = new StringBuilder(updateScore(p1points, P1res));
+        P2res = new StringBuilder(updateScore(p2points, P2res));
+    }
+
+    private void updateScoreForPlayer(int points, StringBuilder score) {
+        score.append(updateScore(points, score));
+    }
+
+    private boolean isGameOverDeuceScore(int player1Points, int player2Points) {
+        return player1Points >= 3 && player2Points >= 3;
+    }
+
+    private String playerWonAdvantage() {
+        String result = "";
+        if (P1point > P2point) {
+            result = "Advantage player1";
+        } else if (P2point > P1point) {
+            result = "Advantage player2";
+        }
+        return result;
+    }
+
+    private boolean isPlayerWin(int player1Point, int player2Point) {
+        int winDifference = 2;
+        return player1Point >= 4 && player2Point >= 0 && (player1Point - player2Point >= winDifference);
+    }
+
+    private String playerWonGame(String gameScore) {
+        String finalScore = gameScore;
+        if (isPlayerWin(P1point, P2point)) {
+            finalScore = "Win for player1";
+        } else if (isPlayerWin(P2point, P1point)) {
+            finalScore = "Win for player2";
+        }
+        return finalScore;
+    }
+
+    public void SetP1Score(int number) {
+
+        for (int i = 0; i < number; i++) {
             P1Score();
         }
-            
+
     }
-    
-    public void SetP2Score(int number){
-        
-        for (int i = 0; i < number; i++)
-        {
+
+    public void SetP2Score(int number) {
+
+        for (int i = 0; i < number; i++) {
             P2Score();
         }
-            
+
     }
-    
-    public void P1Score(){
+
+    public void P1Score() {
         P1point++;
     }
-    
-    public void P2Score(){
+
+    public void P2Score() {
         P2point++;
     }
 
